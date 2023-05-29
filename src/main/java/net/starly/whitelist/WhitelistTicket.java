@@ -1,16 +1,32 @@
-package net.starly.boilerplate;
+package net.starly.whitelist;
 
 import net.starly.core.bstats.Metrics;
+import net.starly.whitelist.command.WhitelistTicketCmd;
+import net.starly.whitelist.command.tabcomplete.WhitelistTicketTab;
+import net.starly.whitelist.dispatcher.ChatInputDispatcher;
+import net.starly.whitelist.dispatcher.PlayerQuitDispatcher;
+import net.starly.whitelist.listener.PlayerInteractListener;
+import net.starly.whitelist.message.MessageLoader;
+import org.bukkit.command.PluginCommand;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class BoilerPlateMain extends JavaPlugin {
+import java.io.File;
+import java.util.function.Consumer;
 
-    private static BoilerPlateMain instance;
-    public static BoilerPlateMain getInstance() {
+public class WhitelistTicket extends JavaPlugin {
+
+    private static WhitelistTicket instance;
+    public static WhitelistTicket getInstance() {
         return instance;
     }
 
+    @Override
+    public void onLoad() {
+        instance = this;
+    }
 
     @Override
     public void onEnable() {
@@ -25,20 +41,33 @@ public class BoilerPlateMain extends JavaPlugin {
 
         /* SETUP
          ──────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
-        instance = this;
         new Metrics(this, 12345); // TODO: 수정
 
         /* CONFIG
          ──────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
-        // TODO: 수정
+        File messageConfigFile = new File(getDataFolder(), "message.yml");
+        if (!messageConfigFile.exists()) saveResource("message.yml", false);
+        MessageLoader.load(YamlConfiguration.loadConfiguration(messageConfigFile));
 
         /* COMMAND
          ──────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
-        // TODO: 수정
+        PluginCommand whitelistTicketSetCommand = getServer().getPluginCommand("whitelist-ticket");
+        whitelistTicketSetCommand.setExecutor(new WhitelistTicketCmd());
+        whitelistTicketSetCommand.setTabCompleter(new WhitelistTicketTab());
 
         /* LISTENER
          ──────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
-        // TODO: 수정
+        getServer().getPluginManager().registerEvents(new ChatInputDispatcher(), this);
+        getServer().getPluginManager().registerEvents(new PlayerQuitDispatcher(), this);
+        getServer().getPluginManager().registerEvents(new PlayerInteractListener(), this);
+    }
+
+    @Override
+    public void onDisable() {
+        PlayerQuitDispatcher.getKeys().forEach(uniqueId -> {
+            Player player = getServer().getPlayer(uniqueId);
+            PlayerQuitDispatcher.getQuitListener(uniqueId).accept(player);
+        });
     }
 
     private boolean isPluginEnabled(String name) {

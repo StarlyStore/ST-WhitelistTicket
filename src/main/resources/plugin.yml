@@ -1,9 +1,9 @@
-name: ST-BoilerPlate # TODO: 수정
-main: net.starly.boilerplate.BoilerPlateMain # TODO: 수정
+name: ST-WhitelistTicket
+main: net.starly.whitelist.WhitelistTicket
 author: Starly Team
 website: http://starly.kr/
 
-description: BoilerPlate Plugin. # TODO: 수정
+description: WhitelistTicket Plugin.
 
 softdepend:
   - ST-Core
@@ -11,4 +11,15 @@ softdepend:
 version: 1.0
 api-version: 1.13
 
+permissions:
+  starly.whitelist.set:
+    description: 손에 든 아이템을 화이트리스트권으로 설정합니다.
+    default: op
+  starly.whitelist.reload:
+    description: 구성파일을 다시 불러옵니다.
+    default: op
+
 commands:
+  whitelist-ticket:
+    description: 화이트 리스트권 명령어
+    aliases: [ 화이트리스트권, 화리권 ]
